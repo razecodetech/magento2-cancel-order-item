@@ -1,0 +1,61 @@
+<?php 
+$_item = $block->getItem(); 
+$itemId = $_item->getItemId();
+
+$orderId = $this->getRequest()->getParam('order_id'); 
+$allowdQty = $_item->getQtyOrdered() - $_item->getQtyShipped() - $_item->getQtyCanceled();
+
+?>
+<?php $block->setPriceDataObject($_item) ?>
+<tr>
+    <?php $i = 0;
+    $columns = $block->getColumns();
+    $lastItemNumber = count($columns) ?>
+    <?php foreach ($columns as $columnName => $columnClass) : ?>
+        <?php $i++; ?>
+        <td class="<?= $columnClass ?><?= ($i === $lastItemNumber ? ' last' : '') ?>">
+            <?= $block->getColumnHtml($_item, $columnName) ?>
+        </td>
+    <?php endforeach; ?>
+    
+    <td data-th="<?= $block->escapeHtml(__('Select-Qty')) ?>" class="col select-qty">
+        <?php if($allowdQty != 0): ?>
+            <select name="item_qty" data-id="<?= $itemId ?>" class="customCancel" id="selectItemQty-<?= $itemId ?>">
+                    <option value="">Select Qty</option>
+                    <?php for($i = 1; $i <= $allowdQty; $i++): ?>
+                    <option value="<?php echo $this->getUrl('cancelorderitem/item/cancel').'?orderid='. $orderId .'&itemid='. $itemId .'&qty='.$i; ?>"><?= $i ?></option>
+                    <?php endfor; ?>
+            </select>
+        <?php endif; ?>
+        <p style="display: none; color: red;" class='errormsg-<?= $itemId ?>'> Required*</p>
+    </td>   
+
+    <td data-th="<?= $block->escapeHtml(__('Actions')) ?>" class="col actions">
+        <?php if($allowdQty != 0): ?>
+            <a href="javascript:void(0);" id="cancelbtn-<?= $itemId ?>" class="action cancelbtn cancel"><?= /* @escapeNotVerified */ __('Cancel') ?></a>
+        <?php endif; ?>
+    </td>
+</tr>
+
+<script type="text/javascript">
+    require(['jquery'], function($) {
+        $('#selectItemQty-<?= $itemId ?>').change(function(){
+            url = $(this).val();
+            var nextel = $(this).closest('td').next('td').find('.cancelbtn');
+            nextel.attr('href',url); 
+
+        });
+
+        $('#cancelbtn-<?= $itemId ?>').click(function(){
+            var url = $(this).attr('href');
+            if(url != 'javascript:void(0);') {
+                $(this).attr('href', demo);
+            } else {
+                $('.errormsg-<?= $itemId ?>').show()
+                setTimeout(() => {
+                    $('.errormsg-<?= $itemId ?>').fadeOut()
+                }, 1000);
+            }
+        });
+    });
+</script>
